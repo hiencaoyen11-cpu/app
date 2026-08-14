@@ -1,0 +1,19 @@
+{
+  "short_name": "Trust Wallet",
+  "name": "Trust Wallet - Crypto & Web3 Multichain",
+  "description": "Billetera Web3 multicadena oficial conectada con sincronización en tiempo real",
+  "icons": [
+    {
+      "src": "/trust-wallet-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/?mode=mobile",
+  "background_color": "#0A0E17",
+  "theme_color": "#0A0E17",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/"
+}

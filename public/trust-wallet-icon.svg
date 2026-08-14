@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#0A0E17"/>
+  <circle cx="256" cy="256" r="210" fill="url(#tw-grad)" opacity="0.15"/>
+  <path d="M256 64C256 64 384 106.667 384 213.333C384 341.333 256 448 256 448C256 448 128 341.333 128 213.333C128 106.667 256 64 256 64Z" fill="url(#tw-shield)" stroke="#00D4FF" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M256 120V390C256 390 340 310 340 213.333C340 145 256 120 256 120Z" fill="#00D4FF" opacity="0.9"/>
+  <path d="M256 120V390C256 390 172 310 172 213.333C172 145 256 120 256 120Z" fill="#0500FF" opacity="0.9"/>
+  <defs>
+    <linearGradient id="tw-grad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0500FF"/>
+      <stop offset="1" stop-color="#00D4FF"/>
+    </linearGradient>
+    <linearGradient id="tw-shield" x1="128" y1="64" x2="384" y2="448" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0500FF"/>
+      <stop offset="1" stop-color="#0055FF"/>
+    </linearGradient>
+  </defs>
+</svg>
