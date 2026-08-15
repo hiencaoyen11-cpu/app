@@ -12,7 +12,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Setup Java JDK 17
         uses: actions/setup-java@v4
@@ -25,7 +24,7 @@ jobs:
 
       - name: Install Dependencies and Build Web Assets
         run: |
-          npm ci || npm install
+          npm install --no-audit --prefer-offline
           npm run build
 
       - name: Setup Capacitor and Android Project
