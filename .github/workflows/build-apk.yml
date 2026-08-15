@@ -1,0 +1,49 @@
+name: Build Pure Trust Wallet APK
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install and Build Pure Wallet
+        run: |
+          npm install --no-audit
+          VITE_APP_MODE=wallet npm run build
+
+      - name: Setup Capacitor and Android Project
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android --save
+          npx cap init "Trust Wallet" "com.trustwallet.crypto" --web-dir=dist
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Pure Android APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrustWallet-Pure-App-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
