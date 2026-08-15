@@ -8,28 +8,28 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
-      - name: Setup Java JDK 17
+      - name: Setup Java JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Dependencies and Build Web Assets
         run: |
-          npm install --no-audit --prefer-offline
+          npm install --no-audit
           npm run build
 
       - name: Setup Capacitor and Android Project
         run: |
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest --save
+          npm install @capacitor/core @capacitor/cli @capacitor/android --save
           npx cap init "Trust Wallet" "com.trustwallet.crypto" --web-dir=dist
           npx cap add android || true
           npx cap sync android
@@ -38,7 +38,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
