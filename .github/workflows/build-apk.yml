@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Trust Wallet APK
 on: [push, workflow_dispatch]
 
 jobs:
@@ -22,10 +22,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Dependencies and Build Web Assets
+      - name: Install and Build Pure Wallet Assets
         run: |
           npm install --no-audit
-          npm run build
+          npm run build:apk
 
       - name: Setup Capacitor and Android Project
         run: |
@@ -43,6 +43,6 @@ jobs:
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: TrustWallet-Android-APK
+          name: TrustWallet-Standalone-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
