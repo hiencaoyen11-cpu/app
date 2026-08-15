@@ -22,16 +22,18 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install and Build Pure Wallet Assets
+      - name: Install and Build Pure Wallet
         run: |
           npm install --no-audit
-          npm run build:apk
+          VITE_APP_MODE=wallet npm run build
 
       - name: Setup Capacitor and Android Project
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android --save
           npx cap init "Trust Wallet" "com.trustwallet.crypto" --web-dir=dist
-          npx cap add android || true
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
           npx cap sync android
 
       - name: Build Debug APK
