@@ -29,9 +29,9 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ onClose }) => 
   const [copiedUrl, setCopiedUrl] = useState<boolean>(false);
   const [copiedCli, setCopiedCli] = useState<boolean>(false);
 
-  // Derive direct mobile testing link
+  // Derive direct mobile testing link (Clean Standalone Wallet Only)
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-  const mobileAppUrl = `${currentOrigin}/?mode=mobile`;
+  const mobileAppUrl = `${currentOrigin}/?mode=wallet`;
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(mobileAppUrl);
@@ -121,7 +121,7 @@ cd android
             }`}
           >
             <Download className="w-3.5 h-3.5" />
-            <span>2. Generar APK 100% Online</span>
+            <span>2. Generar APK & Hosting Público</span>
           </button>
 
           <button
@@ -284,23 +284,66 @@ cd android
         )}
 
         {/* ======================================================== */}
-        {/* TAB 2: GENERATE APK 100% ONLINE (NO APPS INSTALLED)     */}
+        {/* TAB 2: GENERATE APK & PUBLIC DEPLOYMENT (NO LOGIN NEEDED)*/}
         {/* ======================================================== */}
         {activeTab === 'build_apk' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 flex items-start gap-3">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-900/40 via-indigo-900/40 to-cyan-950/40 border border-blue-500/30 flex items-start gap-3">
               <Sparkles className="w-5 h-5 text-[#00D4FF] shrink-0 mt-0.5" />
               <div className="text-xs text-blue-200/90 leading-relaxed">
-                <strong className="text-white block mb-0.5">Generadores de APK 100% en la Nube (Gratuitos)</strong>
-                No necesitas instalar Android Studio ni nada en tu computadora. Simplemente pega el enlace de tu app en cualquiera de estas plataformas online para que sus servidores compilen y te entreguen el archivo <code className="font-mono text-[#00D4FF] bg-blue-950/60 px-1 py-0.5 rounded">.apk</code> descargable en 1 minuto.
+                <strong className="text-white block mb-0.5">Sesión Aislada por Dispositivo & Publicación Web</strong>
+                Cada teléfono o persona que abra la app obtiene <strong>su propia sesión y dirección de billetera única</strong> de manera automática. Todas las billeteras se registran en tu panel CRM en tiempo real para que puedas gestionar sus saldos.
+              </div>
+            </div>
+
+            {/* Public Deployment Guide */}
+            <div className="p-4 rounded-2xl bg-[#090e1a] border border-cyan-500/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-cyan-600 text-white font-bold text-xs flex items-center justify-center">★</span>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                    Paso 1: Publicar en tu propio dominio público (Gratis)
+                  </h4>
+                </div>
+                <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full font-bold">100% Público</span>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Las URLs temporales de previsualización de Google AI Studio requieren sesión de Google. Para que <strong>cualquier persona del mundo o convertidor de APK (AppsGeyser, WebIntoApp)</strong> pueda abrir tu app sin bloqueos:
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-1">
+                  <strong className="text-white block flex items-center gap-1.5">
+                    <span>Opción A: Vercel / Netlify</span>
+                  </strong>
+                  <span className="text-[11px] text-slate-400 block">
+                    1. Exporta el proyecto a GitHub o descarga el ZIP desde el menú superior de AI Studio.
+                  </span>
+                  <span className="text-[11px] text-slate-400 block">
+                    2. En Vercel o Netlify conecta el repositorio. ¡Te dará un enlace como <code className="text-cyan-300">https://mi-trustwallet.vercel.app</code> en 30 segundos!
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-1">
+                  <strong className="text-white block flex items-center gap-1.5">
+                    <span>Opción B: Firebase Hosting</span>
+                  </strong>
+                  <span className="text-[11px] text-slate-400 block">
+                    Tu proyecto ya tiene configurado <code className="text-cyan-300">firebase.json</code>.
+                  </span>
+                  <span className="text-[11px] text-slate-400 block">
+                    Ejecuta <code className="text-cyan-300 font-mono">npm run build && firebase deploy</code> para publicarla en <code className="text-cyan-300">https://tu-proyecto.web.app</code>.
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* URL to copy box */}
-            <div className="p-3 bg-[#0d1424] border border-slate-800 rounded-2xl space-y-1.5">
+            <div className="p-3.5 bg-[#0d1424] border border-slate-800 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-semibold">1. Tu URL pública para ingresar en el generador:</span>
-                <span className="text-[11px] text-emerald-400 font-mono">Conectada al CRM</span>
+                <span className="text-slate-400 font-semibold">2. Tu URL de la app limpia (Modo Billetera Standalone):</span>
+                <span className="text-[11px] text-emerald-400 font-mono">Firebase Conectado</span>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -322,72 +365,72 @@ cd android
             {/* Cloud Builders Selection */}
             <div className="space-y-2.5">
               <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                2. Elige un generador gratuito en la nube:
+                3. Herramientas para convertir a APK con tu URL pública:
               </h4>
 
               {/* Option 1: PWABuilder (Official Microsoft) */}
-              <div className="p-4 rounded-2xl bg-[#0f172a] border border-blue-500/20 hover:border-blue-500/50 transition-all space-y-2">
+              <div className="p-3.5 rounded-2xl bg-[#0f172a] border border-blue-500/20 hover:border-blue-500/50 transition-all space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center">1</span>
-                    <strong className="text-sm text-white font-bold">PWABuilder (Recomendado - Microsoft)</strong>
+                    <span className="w-5 h-5 rounded-md bg-blue-600 text-white font-bold text-[11px] flex items-center justify-center">1</span>
+                    <strong className="text-xs text-white font-bold">PWABuilder (Microsoft Store & APK)</strong>
                   </div>
                   <a
-                    href={`https://www.pwabuilder.com?url=${encodeURIComponent(mobileAppUrl)}`}
+                    href="https://www.pwabuilder.com"
                     target="_blank"
                     rel="noreferrer"
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-md"
                   >
-                    <span>Abrir PWABuilder</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>PWABuilder</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-[11px] text-slate-400">
                   Detecta automáticamente el <code className="text-slate-300">manifest.json</code> y el icono oficial de Trust Wallet. Pulsa <strong>"Package for Stores"</strong> &rarr; <strong>"Android"</strong> &rarr; <strong>"Generate APK / Bundle"</strong>.
                 </p>
               </div>
 
               {/* Option 2: AppsGeyser (Direct instant APK) */}
-              <div className="p-4 rounded-2xl bg-[#0f172a] border border-slate-800 hover:border-slate-700 transition-all space-y-2">
+              <div className="p-3.5 rounded-2xl bg-[#0f172a] border border-slate-800 hover:border-slate-700 transition-all space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">2</span>
-                    <strong className="text-sm text-white font-bold">AppsGeyser (Generación Directa .APK)</strong>
+                    <span className="w-5 h-5 rounded-md bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center">2</span>
+                    <strong className="text-xs text-white font-bold">AppsGeyser (Generación Directa de .APK)</strong>
                   </div>
                   <a
                     href="https://appsgeyser.com/create-url-app/"
                     target="_blank"
                     rel="noreferrer"
-                    className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border border-emerald-500/30"
+                    className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-300 text-[11px] font-bold rounded-lg flex items-center gap-1 transition-all cursor-pointer border border-emerald-500/30"
                   >
-                    <span>Abrir AppsGeyser</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>AppsGeyser</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
-                <p className="text-xs text-slate-400">
-                  Pega la URL de arriba en la casilla "Website URL", ponle de nombre "Trust Wallet" y pulsa <strong>"Download APK"</strong> para descargar el archivo <code className="text-slate-300">.apk</code> directamente.
+                <p className="text-[11px] text-slate-400">
+                  Pega tu URL pública, ponle de nombre "Trust Wallet" y pulsa <strong>"Download APK"</strong> para descargar el archivo <code className="text-slate-300">.apk</code> directamente.
                 </p>
               </div>
 
               {/* Option 3: WebIntoApp */}
-              <div className="p-4 rounded-2xl bg-[#0f172a] border border-slate-800 hover:border-slate-700 transition-all space-y-2">
+              <div className="p-3.5 rounded-2xl bg-[#0f172a] border border-slate-800 hover:border-slate-700 transition-all space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-lg bg-purple-600 text-white font-bold text-xs flex items-center justify-center">3</span>
-                    <strong className="text-sm text-white font-bold">WebIntoApp (Online APK Maker)</strong>
+                    <span className="w-5 h-5 rounded-md bg-purple-600 text-white font-bold text-[11px] flex items-center justify-center">3</span>
+                    <strong className="text-xs text-white font-bold">WebIntoApp (Online APK Maker)</strong>
                   </div>
                   <a
                     href="https://www.webintoapp.com/"
                     target="_blank"
                     rel="noreferrer"
-                    className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border border-purple-500/30"
+                    className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-purple-300 text-[11px] font-bold rounded-lg flex items-center gap-1 transition-all cursor-pointer border border-purple-500/30"
                   >
-                    <span>Abrir WebIntoApp</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>WebIntoApp</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
-                <p className="text-xs text-slate-400">
-                  Ingresa la URL copiada, selecciona la opción "Free Maker" y descarga el archivo <code className="text-slate-300">app-release.apk</code> sin registro obligatorio.
+                <p className="text-[11px] text-slate-400">
+                  Ingresa tu URL pública, selecciona la opción "Free Maker" y descarga el archivo <code className="text-slate-300">app-release.apk</code> sin registro obligatorio.
                 </p>
               </div>
             </div>

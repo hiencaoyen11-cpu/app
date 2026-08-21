@@ -67,7 +67,7 @@ export const CrmHeader: React.FC<CrmHeaderProps> = ({
             </div>
             <p className="text-xs text-slate-400 flex items-center gap-2">
               <span className="flex items-center gap-1 text-emerald-400 font-medium">
-                <Radio size={12} className="animate-pulse" /> Sync Bidireccional Activo (12ms)
+                <Radio size={12} className="animate-pulse" /> Firebase Cloud Live Sync Activo
               </span>
               <span>•</span>
               <span className="text-slate-400">{users.length} Billeteras Gestionadas</span>

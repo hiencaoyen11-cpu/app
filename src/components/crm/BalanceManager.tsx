@@ -34,7 +34,10 @@ export const BalanceManager: React.FC = () => {
     currentUser.assets.forEach((a) => {
       map[a.symbol] = a.balance.toString();
     });
-    setInputBalances(map);
+    setInputBalances((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(map)) return prev;
+      return map;
+    });
   }, [currentUser]);
 
   const handleInputChange = (symbol: string, value: string) => {

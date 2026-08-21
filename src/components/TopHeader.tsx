@@ -101,6 +101,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ viewMode, onChangeViewMode
 
       {/* Action Tools */}
       <div className="flex items-center gap-2">
+        {/* Clean URL Direct Link */}
+        <a
+          href="/?mode=wallet"
+          target="_blank"
+          rel="noreferrer"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#141d30] hover:bg-[#1a2640] border border-blue-500/30 hover:border-blue-400 text-xs font-semibold text-blue-300 rounded-xl transition-all cursor-pointer"
+          title="Abrir URL limpia (sólo la app para generar APK)"
+        >
+          <ExternalLink size={13} />
+          <span>App Limpia</span>
+        </a>
+
         {/* Android APK button */}
         <button
           onClick={onOpenApkModal}
@@ -108,8 +120,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ viewMode, onChangeViewMode
           title="Abrir e instalar en tu celular Android"
         >
           <Smartphone size={14} />
-          <span className="hidden sm:inline">Probar en Android (APK / QR)</span>
-          <span className="sm:hidden">Android</span>
+          <span className="hidden sm:inline">Convertir a APK / QR</span>
+          <span className="sm:hidden">APK / QR</span>
         </button>
 
         <button

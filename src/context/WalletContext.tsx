@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import { AuditLog, CryptoAsset, DAppItem, Transaction, UserWallet, WalletConnectSession } from '../types';
 import { INITIAL_ASSETS, INITIAL_TRANSACTIONS, INITIAL_USERS } from '../data/initialData';
 import {
@@ -85,16 +87,68 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 const STORAGE_KEY_USERS = 'trustwallet_users_v3';
 const STORAGE_KEY_ACTIVE_USER = 'trustwallet_active_user_v3';
+const STORAGE_KEY_DEVICE_ID = 'trustwallet_device_id_v3';
 const STORAGE_KEY_TRANSACTIONS = 'trustwallet_transactions_v3';
 const STORAGE_KEY_AUDIT = 'trustwallet_audit_v3';
 const STORAGE_KEY_ONBOARDING = 'trustwallet_onboarding_v3';
 
+// Helper to generate unique device session id
+const getOrCreateDeviceId = (): string => {
+  if (typeof window === 'undefined') return 'device_default';
+  let devId = localStorage.getItem(STORAGE_KEY_DEVICE_ID);
+  if (!devId) {
+    devId = 'dev_' + Math.random().toString(36).substring(2, 8);
+    localStorage.setItem(STORAGE_KEY_DEVICE_ID, devId);
+  }
+  return devId;
+};
+
+// Helper to generate a new device wallet with realistic address and seed phrase
+const createDeviceWallet = (devId: string): UserWallet => {
+  const hexChars = '0123456789abcdef';
+  let address = '0x';
+  for (let i = 0; i < 40; i++) {
+    address += hexChars[Math.floor(Math.random() * hexChars.length)];
+  }
+
+  const sampleWords = [
+    'witch', 'collapse', 'practice', 'feed', 'shame', 'open', 'despair',
+    'creek', 'road', 'again', 'ice', 'least', 'solar', 'quantum', 'pulse',
+    'matrix', 'velvet', 'timber', 'galaxy', 'ember', 'harbor', 'shadow',
+    'frost', 'shield', 'banner', 'anchor', 'orbit', 'zenith', 'breeze', 'crypto'
+  ];
+  const shuffled = [...sampleWords].sort(() => 0.5 - Math.random());
+  const recoveryPhrase = shuffled.slice(0, 12);
+
+  const btcSuffix = Math.random().toString(36).substring(2, 10);
+  const solSuffix = Math.random().toString(36).substring(2, 10);
+
+  return {
+    id: `user_${devId}`,
+    name: `Billetera Dispositivo (${devId.replace('dev_', '#').toUpperCase()})`,
+    address,
+    btcAddress: `bc1q${btcSuffix}89d98s7df65s4df`,
+    solAddress: `Sol${solSuffix}9876543210ABCDEF`,
+    createdAt: new Date().toISOString(),
+    deviceModel: 'Android Device (Live)',
+    ipAddress: '190.242.10.' + Math.floor(Math.random() * 200 + 10),
+    lastActive: 'Hace un momento',
+    pinCode: '000000',
+    biometricsEnabled: true,
+    recoveryPhrase,
+    assets: INITIAL_ASSETS.map((a) => ({ ...a, balance: 0 })),
+  };
+};
+
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [deviceId] = useState<string>(() => getOrCreateDeviceId());
+
   const [users, setUsers] = useState<UserWallet[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_USERS);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {
         console.error('Error parsing stored users', e);
       }
@@ -103,9 +157,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [activeUserId, setActiveUserId] = useState<string>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_USER);
-    if (saved && users.some(u => u.id === saved)) return saved;
-    return users[0]?.id || 'user_01';
+    const isStandalone = typeof window !== 'undefined' && (
+      window.location.search.includes('mode=wallet') ||
+      window.location.search.includes('mode=mobile') ||
+      window.location.search.includes('mode=app') ||
+      window.location.pathname.startsWith('/app')
+    );
+
+    const devId = getOrCreateDeviceId();
+    const targetId = isStandalone ? `user_${devId}` : localStorage.getItem(STORAGE_KEY_ACTIVE_USER) || 'user_01';
+    return targetId;
   });
 
   const [isOnboarding, setIsOnboarding] = useState<boolean>(() => {
@@ -158,51 +219,190 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [activeDAppSessions, setActiveDAppSessions] = useState<WalletConnectSession[]>([]);
   const [pendingSignature, setPendingSignature] = useState<SignatureRequest | null>(null);
 
-  // Sync to localStorage and BroadcastChannel for instant cross-tab / cross-device sync
+  // Unique Client / Tab Session ID to prevent self-echo loops
+  const sessionIdRef = useRef<string>(
+    'client_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now()
+  );
+  const isRemoteUpdatingRef = useRef<boolean>(false);
+  const lastSavedHashRef = useRef<string>('');
+  const lastNotificationIdRef = useRef<string>('');
+  const firestoreDocRef = useRef(doc(db, 'trustwallet_state', 'shared_state'));
+
+  // Safe State Updaters that only re-render if payload actually changed
+  const safeSetUsers = useCallback((incomingUsers: UserWallet[]) => {
+    setUsers((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(incomingUsers)) return prev;
+      return incomingUsers;
+    });
+  }, []);
+
+  const safeSetActiveUserId = useCallback((incomingId: string) => {
+    setActiveUserId((prev) => (prev === incomingId ? prev : incomingId));
+  }, []);
+
+  const safeSetTransactions = useCallback((incomingTxs: Transaction[]) => {
+    setTransactions((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(incomingTxs)) return prev;
+      return incomingTxs;
+    });
+  }, []);
+
+  const safeSetAuditLogs = useCallback((incomingLogs: AuditLog[]) => {
+    setAuditLogs((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(incomingLogs)) return prev;
+      return incomingLogs;
+    });
+  }, []);
+
+  const safeSetIsOnboarding = useCallback((incomingOnboarding: boolean) => {
+    setIsOnboarding((prev) => (prev === incomingOnboarding ? prev : incomingOnboarding));
+  }, []);
+
+  // 1. Subscribe to real-time Firestore updates across all devices/sessions
   useEffect(() => {
+    // Auto-register device wallet if this is a standalone device/phone
+    const isStandalone = typeof window !== 'undefined' && (
+      window.location.search.includes('mode=wallet') ||
+      window.location.search.includes('mode=mobile') ||
+      window.location.search.includes('mode=app') ||
+      window.location.pathname.startsWith('/app')
+    );
+
+    const devWalletId = `user_${deviceId}`;
+    if (isStandalone) {
+      setUsers((prev) => {
+        if (prev.some((u) => u.id === devWalletId)) return prev;
+        const newWallet = createDeviceWallet(deviceId);
+        return [...prev, newWallet];
+      });
+      setActiveUserId(devWalletId);
+    }
+  }, [deviceId]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      firestoreDocRef.current,
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          // Initialize remote database on first run
+          setDoc(firestoreDocRef.current, {
+            users,
+            activeUserId,
+            transactions,
+            auditLogs,
+            isOnboarding,
+            updatedAt: Date.now(),
+            updatedBy: sessionIdRef.current,
+          }).catch((err) => console.warn('Firestore initial set error', err));
+          return;
+        }
+
+        const data = snapshot.data();
+        if (data) {
+          // Ignore writes sent by this exact client/session to prevent ping-pong loops
+          if (data.updatedBy === sessionIdRef.current) {
+            return;
+          }
+
+          isRemoteUpdatingRef.current = true;
+          if (Array.isArray(data.users) && data.users.length > 0) {
+            safeSetUsers(data.users);
+          }
+          if (typeof data.activeUserId === 'string' && data.activeUserId) {
+            safeSetActiveUserId(data.activeUserId);
+          }
+          if (Array.isArray(data.transactions)) {
+            safeSetTransactions(data.transactions);
+          }
+          if (Array.isArray(data.auditLogs)) {
+            safeSetAuditLogs(data.auditLogs);
+          }
+          if (typeof data.isOnboarding === 'boolean') {
+            safeSetIsOnboarding(data.isOnboarding);
+          }
+          if (data.activeNotification && typeof data.activeNotification === 'object') {
+            const notif = data.activeNotification as NotificationItem;
+            if (
+              notif.id &&
+              notif.id !== lastNotificationIdRef.current &&
+              notif.timestamp &&
+              Date.now() - notif.timestamp < 30000
+            ) {
+              lastNotificationIdRef.current = notif.id;
+              setActiveNotification(notif);
+              setTimeout(() => {
+                setActiveNotification((curr) => (curr?.id === notif.id ? null : curr));
+              }, 6500);
+            }
+          }
+
+          setTimeout(() => {
+            isRemoteUpdatingRef.current = false;
+          }, 200);
+        }
+      },
+      (error) => {
+        console.warn('Firestore real-time subscription note:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [safeSetUsers, safeSetActiveUserId, safeSetTransactions, safeSetAuditLogs, safeSetIsOnboarding]);
+
+  // 2. Debounced save to Firestore whenever CRM or Wallet modifies data locally
+  useEffect(() => {
+    // Check if the state actually changed compared to last saved snapshot
+    const currentHash = JSON.stringify({
+      users,
+      activeUserId,
+      isOnboarding,
+      transactions,
+      auditLogs,
+    });
+
+    if (currentHash === lastSavedHashRef.current) {
+      return;
+    }
+    lastSavedHashRef.current = currentHash;
+
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
-    try {
-      const bc = new BroadcastChannel('trust_wallet_crm_channel');
-      bc.postMessage({ type: 'SYNC_USERS', payload: users });
-      bc.close();
-    } catch (_) {}
-  }, [users]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_ACTIVE_USER, activeUserId);
-    try {
-      const bc = new BroadcastChannel('trust_wallet_crm_channel');
-      bc.postMessage({ type: 'SYNC_ACTIVE_USER', payload: activeUserId });
-      bc.close();
-    } catch (_) {}
-  }, [activeUserId]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_ONBOARDING, isOnboarding ? 'true' : 'false');
-    try {
-      const bc = new BroadcastChannel('trust_wallet_crm_channel');
-      bc.postMessage({ type: 'SYNC_ONBOARDING', payload: isOnboarding });
-      bc.close();
-    } catch (_) {}
-  }, [isOnboarding]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(transactions));
-    try {
-      const bc = new BroadcastChannel('trust_wallet_crm_channel');
-      bc.postMessage({ type: 'SYNC_TRANSACTIONS', payload: transactions });
-      bc.close();
-    } catch (_) {}
-  }, [transactions]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_AUDIT, JSON.stringify(auditLogs));
+
+    // BroadcastChannel local fast-path (tag with senderId so this tab ignores its own message)
     try {
       const bc = new BroadcastChannel('trust_wallet_crm_channel');
-      bc.postMessage({ type: 'SYNC_AUDIT', payload: auditLogs });
+      bc.postMessage({
+        type: 'SYNC_ALL',
+        senderId: sessionIdRef.current,
+        payload: { users, activeUserId, transactions, auditLogs, isOnboarding },
+      });
       bc.close();
     } catch (_) {}
-  }, [auditLogs]);
+
+    // Cloud Firestore Sync (only if change initiated locally)
+    if (!isRemoteUpdatingRef.current) {
+      const timer = setTimeout(() => {
+        setDoc(
+          firestoreDocRef.current,
+          {
+            users,
+            activeUserId,
+            transactions,
+            auditLogs,
+            isOnboarding,
+            updatedAt: Date.now(),
+            updatedBy: sessionIdRef.current,
+          },
+          { merge: true }
+        ).catch((err) => console.warn('Firestore sync error:', err));
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [users, activeUserId, isOnboarding, transactions, auditLogs]);
 
   // Real-time listener for multi-tab / mobile window sync
   useEffect(() => {
@@ -211,23 +411,28 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       bc = new BroadcastChannel('trust_wallet_crm_channel');
       bc.onmessage = (event) => {
         if (!event.data) return;
-        const { type, payload } = event.data;
-        if (type === 'SYNC_USERS' && Array.isArray(payload)) setUsers(payload);
-        if (type === 'SYNC_ACTIVE_USER' && typeof payload === 'string') setActiveUserId(payload);
-        if (type === 'SYNC_TRANSACTIONS' && Array.isArray(payload)) setTransactions(payload);
-        if (type === 'SYNC_AUDIT' && Array.isArray(payload)) setAuditLogs(payload);
-        if (type === 'SYNC_ONBOARDING' && typeof payload === 'boolean') setIsOnboarding(payload);
+        const { type, senderId, payload } = event.data;
+        // Ignore messages from this tab
+        if (senderId === sessionIdRef.current) return;
+
+        if (type === 'SYNC_ALL' && payload) {
+          if (Array.isArray(payload.users)) safeSetUsers(payload.users);
+          if (typeof payload.activeUserId === 'string') safeSetActiveUserId(payload.activeUserId);
+          if (Array.isArray(payload.transactions)) safeSetTransactions(payload.transactions);
+          if (Array.isArray(payload.auditLogs)) safeSetAuditLogs(payload.auditLogs);
+          if (typeof payload.isOnboarding === 'boolean') safeSetIsOnboarding(payload.isOnboarding);
+        }
       };
     } catch (_) {}
 
     const handleStorageChange = (e: StorageEvent) => {
       if (!e.newValue) return;
       try {
-        if (e.key === STORAGE_KEY_USERS) setUsers(JSON.parse(e.newValue));
-        if (e.key === STORAGE_KEY_ACTIVE_USER) setActiveUserId(e.newValue);
-        if (e.key === STORAGE_KEY_TRANSACTIONS) setTransactions(JSON.parse(e.newValue));
-        if (e.key === STORAGE_KEY_AUDIT) setAuditLogs(JSON.parse(e.newValue));
-        if (e.key === STORAGE_KEY_ONBOARDING) setIsOnboarding(e.newValue === 'true');
+        if (e.key === STORAGE_KEY_USERS) safeSetUsers(JSON.parse(e.newValue));
+        if (e.key === STORAGE_KEY_ACTIVE_USER) safeSetActiveUserId(e.newValue);
+        if (e.key === STORAGE_KEY_TRANSACTIONS) safeSetTransactions(JSON.parse(e.newValue));
+        if (e.key === STORAGE_KEY_AUDIT) safeSetAuditLogs(JSON.parse(e.newValue));
+        if (e.key === STORAGE_KEY_ONBOARDING) safeSetIsOnboarding(e.newValue === 'true');
       } catch (err) {
         console.error('Storage sync error', err);
       }
@@ -238,7 +443,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       window.removeEventListener('storage', handleStorageChange);
       if (bc) bc.close();
     };
-  }, []);
+  }, [safeSetUsers, safeSetActiveUserId, safeSetTransactions, safeSetAuditLogs, safeSetIsOnboarding]);
 
   const currentUser = users.find(u => u.id === activeUserId) || users[0] || INITIAL_USERS[0];
   const userTransactions = transactions.filter(t => t.userId === activeUserId);
@@ -266,6 +471,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       timestamp: Date.now(),
     };
     setActiveNotification(item);
+
+    // Send push notification across cloud to all devices
+    setDoc(
+      firestoreDocRef.current,
+      {
+        activeNotification: item,
+      },
+      { merge: true }
+    ).catch((err) => console.warn('Firestore notification push note:', err));
+
     setTimeout(() => {
       setActiveNotification(curr => (curr?.id === item.id ? null : curr));
     }, 6500);

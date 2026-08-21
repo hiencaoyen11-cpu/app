@@ -13,9 +13,12 @@ import {
   Smartphone,
   Lock,
   RotateCcw,
-  Check
+  Check,
+  Headphones,
+  MessageSquare
 } from 'lucide-react';
 import { useWallet } from '../../context/WalletContext';
+import { openTawkSupportChat } from '../../utils/tawk';
 
 interface SettingsTabProps {
   onOpenRecoveryPhrase: () => void;
@@ -270,6 +273,70 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           )}
         </div>
+      </div>
+
+      {/* SECTION: HELP & SUPPORT (TAWK.TO) */}
+      <div className="bg-[#0e1626] border border-slate-800 rounded-3xl p-3.5 space-y-2">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
+          Soporte y Ayuda
+        </span>
+
+        {/* Live Support Chat */}
+        <button
+          onClick={() =>
+            openTawkSupportChat({
+              name: currentUser.name,
+              address: currentUser.address,
+            })
+          }
+          className="w-full flex items-center justify-between p-2.5 bg-gradient-to-r from-blue-600/20 via-blue-500/10 to-transparent hover:from-blue-600/30 border border-blue-500/30 rounded-2xl transition-all text-left group active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <Headphones size={20} />
+              </div>
+              <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-[#0e1626]"></span>
+              </span>
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>Atención al Cliente en Vivo</span>
+                <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 rounded font-semibold">
+                  24/7 En Línea
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Chatea con un especialista de soporte Trust Wallet
+              </p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-blue-400 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* Help Center FAQs */}
+        <button
+          onClick={() =>
+            openTawkSupportChat({
+              name: currentUser.name,
+              address: currentUser.address,
+            })
+          }
+          className="w-full flex items-center justify-between p-2 hover:bg-[#142036] rounded-2xl transition-colors text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-slate-800 text-slate-300 flex items-center justify-center">
+              <HelpCircle size={18} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white block">Centro de Preguntas Frecuentes</span>
+              <span className="text-[10px] text-slate-400">Guías de seguridad y recuperación</span>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-slate-500" />
+        </button>
       </div>
 
       {/* App Version Info */}

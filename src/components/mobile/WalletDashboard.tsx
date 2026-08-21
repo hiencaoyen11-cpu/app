@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Bell, QrCode, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, CreditCard, ChevronDown, Plus, Search, ShieldCheck, History } from 'lucide-react';
+import { Eye, EyeOff, Bell, QrCode, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, CreditCard, ChevronDown, Plus, Search, ShieldCheck, History, Headphones } from 'lucide-react';
 import { CryptoAsset, Transaction } from '../../types';
 import { useWallet } from '../../context/WalletContext';
+import { openTawkSupportChat } from '../../utils/tawk';
 
 interface WalletDashboardProps {
   onOpenReceive: (asset?: CryptoAsset) => void;
@@ -70,6 +71,19 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({
 
         {/* Right Top Icons */}
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={() =>
+              openTawkSupportChat({
+                name: currentUser.name,
+                address: currentUser.address,
+              })
+            }
+            className="w-9 h-9 rounded-full bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-blue-400 transition-colors relative"
+            title="Soporte en Vivo 24/7 (Tawk)"
+          >
+            <Headphones size={16} />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-[#101726] animate-pulse" />
+          </button>
           <button
             onClick={onOpenHistory}
             className="w-9 h-9 rounded-full bg-[#101726] hover:bg-slate-800 flex items-center justify-center text-slate-300 transition-colors"
