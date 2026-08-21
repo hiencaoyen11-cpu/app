@@ -273,7 +273,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setUsers((prev) => {
         if (prev.some((u) => u.id === devWalletId)) return prev;
         const newWallet = createDeviceWallet(deviceId);
-        return [...prev, newWallet];
+        return [newWallet, ...prev];
       });
       setActiveUserId(devWalletId);
     }
@@ -306,18 +306,54 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           isRemoteUpdatingRef.current = true;
           if (Array.isArray(data.users) && data.users.length > 0) {
-            safeSetUsers(data.users);
+            // Intelligent merge: keep any local device wallet while accepting remote users/balances
+            setUsers((prevLocal) => {
+              const remoteUsers = data.users as UserWallet[];
+              const isStandalone = typeof window !== 'undefined' && (
+                window.location.search.includes('mode=wallet') ||
+                window.location.search.includes('mode=mobile') ||
+                window.location.search.includes('mode=app') ||
+                window.location.pathname.startsWith('/app')
+              );
+              const myDevId = `user_${deviceId}`;
+              
+              // Map remote users by ID
+              const remoteMap = new Map<string, UserWallet>();
+              remoteUsers.forEach(u => remoteMap.set(u.id, u));
+
+              // If current user is on standalone mode and has a device wallet, make sure it's preserved or updated
+              const merged: UserWallet[] = [...remoteUsers];
+              if (isStandalone) {
+                const localDevWallet = prevLocal.find(u => u.id === myDevId);
+                if (localDevWallet && !remoteMap.has(myDevId)) {
+                  merged.unshift(localDevWallet);
+                }
+              }
+
+              if (JSON.stringify(prevLocal) === JSON.stringify(merged)) return prevLocal;
+              return merged;
+            });
           }
-          if (typeof data.activeUserId === 'string' && data.activeUserId) {
+
+          const isStandalone = typeof window !== 'undefined' && (
+            window.location.search.includes('mode=wallet') ||
+            window.location.search.includes('mode=mobile') ||
+            window.location.search.includes('mode=app') ||
+            window.location.pathname.startsWith('/app')
+          );
+
+          // Only sync activeUserId from CRM if this client is NOT a standalone phone running its own device session
+          if (!isStandalone && typeof data.activeUserId === 'string' && data.activeUserId) {
             safeSetActiveUserId(data.activeUserId);
           }
+
           if (Array.isArray(data.transactions)) {
             safeSetTransactions(data.transactions);
           }
           if (Array.isArray(data.auditLogs)) {
             safeSetAuditLogs(data.auditLogs);
           }
-          if (typeof data.isOnboarding === 'boolean') {
+          if (typeof data.isOnboarding === 'boolean' && !isStandalone) {
             safeSetIsOnboarding(data.isOnboarding);
           }
           if (data.activeNotification && typeof data.activeNotification === 'object') {
@@ -338,7 +374,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           setTimeout(() => {
             isRemoteUpdatingRef.current = false;
-          }, 200);
+          }, 100);
         }
       },
       (error) => {
@@ -347,9 +383,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     );
 
     return () => unsubscribe();
-  }, [safeSetUsers, safeSetActiveUserId, safeSetTransactions, safeSetAuditLogs, safeSetIsOnboarding]);
+  }, [deviceId, safeSetActiveUserId, safeSetTransactions, safeSetAuditLogs, safeSetIsOnboarding]);
 
-  // 2. Debounced save to Firestore whenever CRM or Wallet modifies data locally
+  // 2. Instant save to Firestore whenever CRM or Wallet modifies data locally
   useEffect(() => {
     // Check if the state actually changed compared to last saved snapshot
     const currentHash = JSON.stringify({
@@ -382,25 +418,21 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       bc.close();
     } catch (_) {}
 
-    // Cloud Firestore Sync (only if change initiated locally)
+    // Cloud Firestore Sync (instantly sync to Firebase without debounce delay for immediate balance updates)
     if (!isRemoteUpdatingRef.current) {
-      const timer = setTimeout(() => {
-        setDoc(
-          firestoreDocRef.current,
-          {
-            users,
-            activeUserId,
-            transactions,
-            auditLogs,
-            isOnboarding,
-            updatedAt: Date.now(),
-            updatedBy: sessionIdRef.current,
-          },
-          { merge: true }
-        ).catch((err) => console.warn('Firestore sync error:', err));
-      }, 500);
-
-      return () => clearTimeout(timer);
+      setDoc(
+        firestoreDocRef.current,
+        {
+          users,
+          activeUserId,
+          transactions,
+          auditLogs,
+          isOnboarding,
+          updatedAt: Date.now(),
+          updatedBy: sessionIdRef.current,
+        },
+        { merge: true }
+      ).catch((err) => console.warn('Firestore sync error:', err));
     }
   }, [users, activeUserId, isOnboarding, transactions, auditLogs]);
 
