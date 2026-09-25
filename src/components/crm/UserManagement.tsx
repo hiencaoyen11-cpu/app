@@ -28,7 +28,7 @@ interface UserManagementProps {
 }
 
 export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserModal }) => {
-  const { users, activeUserId, selectUser, updateSeedPhrase, pushPushNotification } = useWallet();
+  const { users, activeUserId, crmSelectedUserId, selectCrmUser, selectUser, updateSeedPhrase, pushPushNotification } = useWallet();
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   
   // Seed phrase modal state
@@ -115,7 +115,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserMod
       {/* Users Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {users.map((user) => {
-          const isActive = user.id === activeUserId;
+          const isPhoneActive = user.id === activeUserId;
+          const isCrmActive = user.id === crmSelectedUserId;
           const totalUSD = user.assets.reduce((sum, a) => sum + a.balance * a.usdPrice, 0);
           const isSeedRevealed = !!revealedSeeds[user.id];
 
@@ -123,7 +124,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserMod
             <div
               key={user.id}
               className={`bg-[#0e1626] border rounded-3xl p-5 space-y-4 transition-all flex flex-col justify-between ${
-                isActive
+                isCrmActive
                   ? 'border-blue-500 shadow-xl shadow-blue-500/10'
                   : 'border-slate-800 hover:border-slate-700'
               }`}
@@ -134,7 +135,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserMod
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-11 h-11 rounded-2xl flex items-center justify-center ${
-                        isActive
+                        isCrmActive
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-slate-800 text-slate-400'
                       }`}
@@ -142,9 +143,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserMod
                       <Smartphone size={22} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
+                      <h4 className="font-bold text-sm text-white flex items-center gap-1.5 flex-wrap">
                         {user.name}
-                        {isActive && (
+                        {isCrmActive && (
+                          <span className="text-[9px] px-1.5 py-0.2 bg-blue-500/20 text-blue-300 font-bold rounded">
+                            EN CRM
+                          </span>
+                        )}
+                        {isPhoneActive && (
                           <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 font-bold rounded">
                             ACTIVA EN MÓVIL
                           </span>
@@ -253,19 +259,28 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserMod
                 </div>
               </div>
 
-              {/* Action Switch */}
-              <div className="pt-3 border-t border-slate-800/80">
-                {isActive ? (
-                  <div className="py-2 text-center text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5">
-                    <CheckCircle2 size={15} /> Billetera Sincronizada Actualmente
+              {/* Action Buttons: Separate CRM management and Mobile simulator */}
+              <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+                {!isCrmActive && (
+                  <button
+                    onClick={() => selectCrmUser(user.id)}
+                    className="w-full py-2 bg-[#141f33] hover:bg-blue-600/30 text-blue-300 hover:text-white font-bold text-xs rounded-xl border border-blue-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Seleccionar en Panel CRM</span>
+                  </button>
+                )}
+
+                {isPhoneActive ? (
+                  <div className="py-1.5 text-center text-[11px] font-bold text-emerald-400 flex items-center justify-center gap-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                    <CheckCircle2 size={13} /> Activa en Teléfono Móvil
                   </div>
                 ) : (
                   <button
                     onClick={() => selectUser(user.id)}
-                    className="w-full py-2.5 bg-[#141f33] hover:bg-blue-600 text-slate-300 hover:text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-2 bg-[#121c2c] hover:bg-emerald-600 text-slate-300 hover:text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    Cargar en Pantalla Android
-                    <ArrowRight size={14} />
+                    <span>Cargar en Pantalla Móvil</span>
+                    <ArrowRight size={13} />
                   </button>
                 )}
               </div>

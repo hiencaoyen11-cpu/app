@@ -17,7 +17,7 @@ import { useWallet } from '../../context/WalletContext';
 
 export const BalanceManager: React.FC = () => {
   const {
-    currentUser,
+    crmSelectedUser,
     updateTokenBalance,
     quickSetPresetBalance,
     currencySymbol,
@@ -28,24 +28,24 @@ export const BalanceManager: React.FC = () => {
   const [successSaved, setSuccessSaved] = useState<string | null>(null);
   const [copiedSeed, setCopiedSeed] = useState<boolean>(false);
 
-  // Sync inputs on currentUser change
+  // Sync inputs on crmSelectedUser change
   React.useEffect(() => {
     const map: { [symbol: string]: string } = {};
-    currentUser.assets.forEach((a) => {
+    crmSelectedUser.assets.forEach((a) => {
       map[a.symbol] = a.balance.toString();
     });
     setInputBalances((prev) => {
       if (JSON.stringify(prev) === JSON.stringify(map)) return prev;
       return map;
     });
-  }, [currentUser]);
+  }, [crmSelectedUser]);
 
   const handleInputChange = (symbol: string, value: string) => {
     setInputBalances((prev) => ({ ...prev, [symbol]: value }));
   };
 
   const handleCopySeed = () => {
-    navigator.clipboard.writeText(currentUser.recoveryPhrase.join(' '));
+    navigator.clipboard.writeText(crmSelectedUser.recoveryPhrase.join(' '));
     setCopiedSeed(true);
     pushPushNotification('Semilla Copiada', '12 palabras mnemónicas de la billetera activa copiadas', 'info');
     setTimeout(() => setCopiedSeed(false), 2000);
@@ -53,19 +53,19 @@ export const BalanceManager: React.FC = () => {
 
   const handleSaveSingleBalance = (symbol: string) => {
     const val = parseFloat(inputBalances[symbol]) || 0;
-    updateTokenBalance(currentUser.id, symbol, val);
+    updateTokenBalance(crmSelectedUser.id, symbol, val);
     setSuccessSaved(symbol);
     setTimeout(() => setSuccessSaved(null), 2000);
   };
 
   const handleSaveAllBalances = () => {
-    currentUser.assets.forEach((a) => {
+    crmSelectedUser.assets.forEach((a) => {
       const val = parseFloat(inputBalances[a.symbol]) || 0;
-      updateTokenBalance(currentUser.id, a.symbol, val);
+      updateTokenBalance(crmSelectedUser.id, a.symbol, val);
     });
     pushPushNotification(
       'Balances Actualizados',
-      `Todos los saldos de ${currentUser.name} han sido actualizados en la app móvil`,
+      `Todos los saldos de ${crmSelectedUser.name} han sido actualizados en la app móvil`,
       'success'
     );
   };
@@ -80,17 +80,17 @@ export const BalanceManager: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-extrabold text-base text-white">{currentUser.name}</h3>
+              <h3 className="font-extrabold text-base text-white">{crmSelectedUser.name}</h3>
               <span className="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 font-bold rounded-full">
                 Sincronizado
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 font-mono mt-1">
-              <span>EVM: {currentUser.address.substring(0, 8)}...{currentUser.address.substring(36)}</span>
+              <span>EVM: {crmSelectedUser.address.substring(0, 8)}...{crmSelectedUser.address.substring(36)}</span>
               <button
                 onClick={handleCopySeed}
                 className="text-amber-400 hover:text-amber-300 font-sans flex items-center gap-1 font-semibold text-[11px] bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
-                title={currentUser.recoveryPhrase.join(' ')}
+                title={crmSelectedUser.recoveryPhrase.join(' ')}
               >
                 <Key size={11} />
                 <span>{copiedSeed ? '¡Semilla Copiada!' : 'Copiar 12 Palabras Semilla'}</span>
@@ -103,25 +103,25 @@ export const BalanceManager: React.FC = () => {
         {/* Quick Presets Buttons */}
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => quickSetPresetBalance(currentUser.id, 'whale')}
+            onClick={() => quickSetPresetBalance(crmSelectedUser.id, 'whale')}
             className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
           >
             🐋 Preset Ballena ($250k+)
           </button>
           <button
-            onClick={() => quickSetPresetBalance(currentUser.id, 'trader')}
+            onClick={() => quickSetPresetBalance(crmSelectedUser.id, 'trader')}
             className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
           >
             📈 Preset Trader ($15k)
           </button>
           <button
-            onClick={() => quickSetPresetBalance(currentUser.id, 'fresh')}
+            onClick={() => quickSetPresetBalance(crmSelectedUser.id, 'fresh')}
             className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
           >
             🌱 Cartera $0
           </button>
           <button
-            onClick={() => quickSetPresetBalance(currentUser.id, 'random')}
+            onClick={() => quickSetPresetBalance(crmSelectedUser.id, 'random')}
             className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
           >
             <Sparkles size={12} /> Aleatorio
@@ -148,7 +148,7 @@ export const BalanceManager: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {currentUser.assets.map((asset) => {
+          {crmSelectedUser.assets.map((asset) => {
             const currentVal = parseFloat(inputBalances[asset.symbol] || '0') || 0;
             const approxUSD = currentVal * asset.usdPrice;
             const isSaved = successSaved === asset.symbol;

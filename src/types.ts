@@ -41,6 +41,7 @@ export interface Transaction {
 
 export interface UserWallet {
   id: string;
+  identityId?: string;
   name: string;
   address: string; // EVM address format
   btcAddress: string;

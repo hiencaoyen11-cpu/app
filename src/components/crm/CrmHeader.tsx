@@ -29,12 +29,12 @@ export const CrmHeader: React.FC<CrmHeaderProps> = ({
 }) => {
   const {
     users,
-    activeUserId,
-    selectUser,
-    currentUser,
+    crmSelectedUserId,
+    selectCrmUser,
+    crmSelectedUser,
     currencySymbol,
     auditLogs,
-    resetAllData,
+    resetCrmData,
   } = useWallet();
 
   const totalManagedUSD = users.reduce((acc, u) => {
@@ -101,8 +101,8 @@ export const CrmHeader: React.FC<CrmHeaderProps> = ({
             <Users size={14} className="text-blue-400 shrink-0" />
             <select
               aria-label="Seleccionar Usuario Administrado"
-              value={activeUserId}
-              onChange={(e) => selectUser(e.target.value)}
+              value={crmSelectedUserId}
+              onChange={(e) => selectCrmUser(e.target.value)}
               className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer max-w-[160px] truncate"
             >
               {users.map((u) => (

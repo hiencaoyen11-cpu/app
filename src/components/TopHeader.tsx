@@ -22,7 +22,8 @@ interface TopHeaderProps {
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({ viewMode, onChangeViewMode, onOpenApkModal }) => {
-  const { pushPushNotification, resetAllData, currentUser } = useWallet();
+  const { pushPushNotification, resetCrmData, resetWalletSession, resetAllData, currentUser } = useWallet();
+  const [showResetMenu, setShowResetMenu] = React.useState<boolean>(false);
 
   const handleQuickDemoAlert = () => {
     pushPushNotification(
@@ -132,14 +133,67 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ viewMode, onChangeViewMode
           Test Push
         </button>
 
-        <button
-          onClick={resetAllData}
-          className="px-3 py-1.5 bg-[#141d30] hover:bg-rose-900/30 border border-slate-700 hover:border-rose-700/50 text-xs font-semibold text-slate-300 hover:text-rose-300 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
-          title="Restablecer datos de fábrica"
-        >
-          <RotateCcw size={13} />
-          <span className="hidden sm:inline">Restablecer</span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowResetMenu(!showResetMenu)}
+            className="px-3 py-1.5 bg-[#141d30] hover:bg-rose-900/30 border border-slate-700 hover:border-rose-700/50 text-xs font-semibold text-slate-300 hover:text-rose-300 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+            title="Opciones de reinicio y restablecimiento"
+          >
+            <RotateCcw size={13} />
+            <span className="hidden sm:inline">Restablecer</span>
+          </button>
+
+          {showResetMenu && (
+            <div className="absolute right-0 mt-2 w-64 bg-[#0d1424] border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 text-left space-y-1 animate-in fade-in zoom-in-95">
+              <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Opciones de Restablecimiento
+              </div>
+              <button
+                onClick={() => {
+                  setShowResetMenu(false);
+                  resetCrmData();
+                }}
+                className="w-full text-left p-2 rounded-xl hover:bg-slate-800 text-xs text-white transition-colors"
+              >
+                <div className="font-bold flex items-center gap-1.5 text-blue-400">
+                  <span>Restablecer Solo CRM</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">
+                  Restaura usuarios demo sin borrar tu billetera del celular.
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  setShowResetMenu(false);
+                  resetWalletSession();
+                }}
+                className="w-full text-left p-2 rounded-xl hover:bg-slate-800 text-xs text-white transition-colors"
+              >
+                <div className="font-bold flex items-center gap-1.5 text-amber-400">
+                  <span>Reiniciar Billetera Móvil</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">
+                  Vuelve a la pantalla de bienvenida / onboarding en el teléfono.
+                </div>
+              </button>
+              <div className="border-t border-slate-800 my-1" />
+              <button
+                onClick={() => {
+                  setShowResetMenu(false);
+                  resetAllData();
+                }}
+                className="w-full text-left p-2 rounded-xl hover:bg-rose-900/30 text-xs text-rose-300 transition-colors"
+              >
+                <div className="font-bold flex items-center gap-1.5">
+                  <span>Restablecer Todo de Fábrica</span>
+                </div>
+                <div className="text-[10px] text-rose-300/70 mt-0.5">
+                  Borra todos los datos locales y remotos.
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

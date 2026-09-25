@@ -22,19 +22,25 @@ import { useWallet } from '../../context/WalletContext';
 
 export const TransactionGenerator: React.FC = () => {
   const {
-    currentUser,
+    crmSelectedUser,
     users,
     createCustomTransaction,
     currencySymbol,
     pushPushNotification,
   } = useWallet();
 
-  const [targetUserId, setTargetUserId] = useState<string>(currentUser.id);
+  const [targetUserId, setTargetUserId] = useState<string>(crmSelectedUser.id);
   const [selectedSymbol, setSelectedSymbol] = useState<string>('BTC');
   const [txType, setTxType] = useState<TransactionType>('receive');
   const [amount, setAmount] = useState<string>('0.25');
   const [fromAddress, setFromAddress] = useState<string>('0x1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa');
-  const [toAddress, setToAddress] = useState<string>(currentUser.address);
+  const [toAddress, setToAddress] = useState<string>(crmSelectedUser.address);
+
+  // Sync toAddress and targetUserId when crmSelectedUser changes
+  React.useEffect(() => {
+    setTargetUserId(crmSelectedUser.id);
+    setToAddress(crmSelectedUser.address);
+  }, [crmSelectedUser]);
   const [txStatus, setTxStatus] = useState<TransactionStatus>('completed');
   const [customTimestamp, setCustomTimestamp] = useState<string>(() => {
     const d = new Date();
@@ -46,7 +52,7 @@ export const TransactionGenerator: React.FC = () => {
   const [triggerPush, setTriggerPush] = useState<boolean>(true);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  const selectedUser = users.find((u) => u.id === targetUserId) || currentUser;
+  const selectedUser = users.find((u) => u.id === targetUserId) || crmSelectedUser;
   const targetAsset = selectedUser.assets.find((a) => a.symbol === selectedSymbol) || selectedUser.assets[0];
 
   // Quick preset generators for addresses

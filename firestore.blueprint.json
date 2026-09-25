@@ -5,10 +5,8 @@
         "description": "Global synchronized state for Trust Wallet & CRM",
         "fields": {
           "users": { "type": "array" },
-          "activeUserId": { "type": "string" },
           "transactions": { "type": "array" },
           "auditLogs": { "type": "array" },
-          "isOnboarding": { "type": "boolean" },
           "activeNotification": { "type": "object" },
           "updatedAt": { "type": "number" },
           "updatedBy": { "type": "string" }

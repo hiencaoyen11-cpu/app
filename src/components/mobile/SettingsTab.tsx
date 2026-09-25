@@ -33,7 +33,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 }) => {
   const {
     currentUser,
-    users,
+    deviceWallets,
     currency,
     setCurrency,
     isBiometricsActive,
@@ -91,7 +91,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-1 text-slate-400 text-xs">
-            <span>{users.length} billeteras</span>
+            <span>{deviceWallets.length} {deviceWallets.length === 1 ? 'billetera' : 'billeteras'}</span>
             <ChevronRight size={16} />
           </div>
         </button>

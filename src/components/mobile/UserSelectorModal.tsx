@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Check, X, Smartphone, ShieldCheck, Wallet, Copy } from 'lucide-react';
+import { Plus, Check, X, Smartphone, ShieldCheck, Wallet, Copy, Trash2 } from 'lucide-react';
 import { useWallet } from '../../context/WalletContext';
 
 interface UserSelectorModalProps {
@@ -7,7 +7,7 @@ interface UserSelectorModalProps {
 }
 
 export const UserSelectorModal: React.FC<UserSelectorModalProps> = ({ onClose }) => {
-  const { users, activeUserId, selectUser, createNewUser, currencySymbol, pushPushNotification } = useWallet();
+  const { deviceWallets, activeUserId, selectUser, createNewUser, deleteWallet, currencySymbol, pushPushNotification } = useWallet();
   const [showCreateInput, setShowCreateInput] = useState<boolean>(false);
   const [newWalletName, setNewWalletName] = useState<string>('');
 
@@ -19,7 +19,7 @@ export const UserSelectorModal: React.FC<UserSelectorModalProps> = ({ onClose })
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWalletName.trim()) return;
-    const newId = createNewUser(newWalletName.trim());
+    createNewUser(newWalletName.trim());
     setNewWalletName('');
     setShowCreateInput(false);
     onClose();
@@ -32,7 +32,9 @@ export const UserSelectorModal: React.FC<UserSelectorModalProps> = ({ onClose })
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
             <h3 className="font-bold text-sm text-white">Tus Billeteras Multicadena</h3>
-            <p className="text-[11px] text-slate-400">Selecciona o crea una cuenta</p>
+            <p className="text-[11px] text-slate-400">
+              {deviceWallets.length} {deviceWallets.length === 1 ? 'cuenta disponible' : 'cuentas disponibles'} en este dispositivo
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -44,7 +46,7 @@ export const UserSelectorModal: React.FC<UserSelectorModalProps> = ({ onClose })
 
         {/* User Wallets List */}
         <div className="flex-1 overflow-y-auto space-y-2 max-h-64">
-          {users.map((user) => {
+          {deviceWallets.map((user) => {
             const isCurrent = user.id === activeUserId;
             const totalUSD = user.assets.reduce((sum, a) => sum + a.balance * a.usdPrice, 0);
 
@@ -52,42 +54,56 @@ export const UserSelectorModal: React.FC<UserSelectorModalProps> = ({ onClose })
               <div
                 key={user.id}
                 onClick={() => handleSelect(user.id)}
-                className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${
                   isCurrent
                     ? 'bg-blue-600/15 border-blue-500 shadow-md shadow-blue-500/10'
                     : 'bg-[#121b2d] border-slate-800 hover:bg-[#18243c]'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                    className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
                       isCurrent ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'
                     }`}
                   >
                     <Wallet size={18} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs text-white">{user.name}</span>
+                      <span className="font-bold text-xs text-white truncate max-w-[130px]">{user.name}</span>
                       {isCurrent && (
-                        <span className="text-[9px] px-1.5 py-0.2 bg-blue-500/20 text-blue-300 rounded font-semibold">
+                        <span className="text-[9px] px-1.5 py-0.2 bg-blue-500/20 text-blue-300 rounded font-semibold shrink-0">
                           Activa
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400 block">
+                    <span className="text-[11px] font-mono text-slate-400 block truncate">
                       {user.address.substring(0, 6)}...{user.address.substring(38)}
                     </span>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="font-bold text-xs text-white font-mono block">
-                    {currencySymbol}{totalUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {user.assets.length} tokens
-                  </span>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <span className="font-bold text-xs text-white font-mono block">
+                      {currencySymbol}{totalUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {user.assets.length} tokens
+                    </span>
+                  </div>
+                  {deviceWallets.length > 1 && !isCurrent && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteWallet(user.id);
+                      }}
+                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                      title="Eliminar billetera"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
                 </div>
               </div>
             );
