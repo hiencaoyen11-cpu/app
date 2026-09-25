@@ -18,10 +18,12 @@ import {
   EyeOff,
   AlertTriangle,
   X,
+  Landmark,
 } from 'lucide-react';
 import { UserWallet } from '../../types';
 import { useWallet } from '../../context/WalletContext';
 import { generate12WordMnemonic, parseRecoveryPhrase } from '../../utils/bip39';
+import { UserBankDetailsModal } from './UserBankDetailsModal';
 
 interface UserManagementProps {
   onOpenNewUserModal: () => void;
@@ -33,6 +35,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserMod
   
   // Seed phrase modal state
   const [selectedUserForSeed, setSelectedUserForSeed] = useState<UserWallet | null>(null);
+  const [selectedUserForBank, setSelectedUserForBank] = useState<UserWallet | null>(null);
   const [isEditingSeed, setIsEditingSeed] = useState<boolean>(false);
   const [seedInputText, setSeedInputText] = useState<string>('');
   const [seedError, setSeedError] = useState<string>('');
@@ -248,6 +251,41 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserMod
                   </div>
                 </div>
 
+                {/* Bank Deposit / Checkout Settings Box */}
+                <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                      <Landmark size={12} /> Datos Bancarios (Checkout Comprar):
+                    </span>
+                    <button
+                      onClick={() => setSelectedUserForBank(user)}
+                      className="text-[10px] text-blue-300 hover:text-white font-bold flex items-center gap-1 bg-blue-600/20 hover:bg-blue-600/30 px-2 py-0.5 rounded-lg border border-blue-500/30 transition-colors cursor-pointer"
+                    >
+                      <Edit3 size={11} /> Asignar / Editar
+                    </button>
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-300 space-y-0.5 bg-[#090e18] p-2 rounded-xl border border-slate-800/80">
+                    <div className="flex justify-between truncate">
+                      <span className="text-slate-500">Titular:</span>
+                      <span className="truncate max-w-[170px] font-semibold text-slate-200">
+                        {user.bankDetails?.accountHolderName || 'Trust Global Escrow Ltd'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between truncate">
+                      <span className="text-slate-500">IBAN:</span>
+                      <span className="text-blue-300 truncate max-w-[170px]">
+                        {user.bankDetails?.iban || 'ES91 2100...'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Referencia:</span>
+                      <span className="text-amber-300 font-bold">
+                        {user.bankDetails?.reference || ('TW-' + user.id.replace('user_', '').toUpperCase())}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Metadata tags */}
                 <div className="flex flex-wrap gap-2 text-[10px] text-slate-400 pt-1">
                   <span className="flex items-center gap-1 bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-800">
@@ -421,6 +459,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onOpenNewUserMod
             )}
           </div>
         </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* BANK DEPOSIT & CHECKOUT MODAL (CRM)                      */}
+      {/* ======================================================== */}
+      {selectedUserForBank && (
+        <UserBankDetailsModal
+          user={selectedUserForBank}
+          onClose={() => setSelectedUserForBank(null)}
+        />
       )}
     </div>
   );

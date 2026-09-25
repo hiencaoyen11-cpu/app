@@ -39,6 +39,16 @@ export interface Transaction {
   note?: string;
 }
 
+export interface BankDepositDetails {
+  accountHolderName: string; // Nombre de cuentahabiente
+  iban: string; // IBAN
+  swiftBic: string; // SWIFT / BIC
+  reference: string; // Referencia de depósito asignada
+  bankName?: string; // Nombre de la entidad bancaria
+  country?: string; // País o región
+  notes?: string; // Instrucciones adicionales para el usuario
+}
+
 export interface UserWallet {
   id: string;
   identityId?: string;
@@ -55,6 +65,7 @@ export interface UserWallet {
   recoveryPhrase: string[];
   assets: CryptoAsset[];
   customAvatar?: string;
+  bankDetails?: BankDepositDetails;
 }
 
 export interface AuditLog {

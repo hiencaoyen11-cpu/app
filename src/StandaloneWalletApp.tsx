@@ -13,6 +13,7 @@ import { SettingsTab } from './components/mobile/SettingsTab';
 import { SecurityScreen } from './components/mobile/SecurityScreen';
 import { OnboardingScreen } from './components/mobile/OnboardingScreen';
 import { UserSelectorModal } from './components/mobile/UserSelectorModal';
+import { BuyCheckoutModal } from './components/mobile/BuyCheckoutModal';
 import { CryptoAsset, Transaction } from './types';
 
 export const StandaloneWalletApp: React.FC = () => {
@@ -25,6 +26,8 @@ export const StandaloneWalletApp: React.FC = () => {
   const [sendModalAsset, setSendModalAsset] = useState<CryptoAsset | undefined>(undefined);
   const [showSendModal, setShowSendModal] = useState<boolean>(false);
   const [showSwapModal, setShowSwapModal] = useState<boolean>(false);
+  const [buyModalAsset, setBuyModalAsset] = useState<CryptoAsset | undefined>(undefined);
+  const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
   const [selectedTxDetail, setSelectedTxDetail] = useState<Transaction | null>(null);
   const [showUserModal, setShowUserModal] = useState<boolean>(false);
@@ -41,6 +44,11 @@ export const StandaloneWalletApp: React.FC = () => {
     setShowSendModal(true);
   };
 
+  const handleOpenBuy = (asset?: CryptoAsset) => {
+    setBuyModalAsset(asset);
+    setShowBuyModal(true);
+  };
+
   return (
     <AndroidFrame standalone={true}>
       {isOnboarding ? (
@@ -55,6 +63,7 @@ export const StandaloneWalletApp: React.FC = () => {
                 onOpenReceive={handleOpenReceive}
                 onOpenSend={handleOpenSend}
                 onOpenSwap={() => setShowSwapModal(true)}
+                onOpenBuy={handleOpenBuy}
                 onOpenHistory={() => setShowHistoryModal(true)}
                 onOpenUserModal={() => setShowUserModal(true)}
               />
@@ -77,6 +86,7 @@ export const StandaloneWalletApp: React.FC = () => {
             <ReceiveModal
               initialAsset={receiveModalAsset}
               onClose={() => setShowReceiveModal(false)}
+              onOpenBuy={handleOpenBuy}
             />
           )}
 
@@ -89,6 +99,16 @@ export const StandaloneWalletApp: React.FC = () => {
 
           {showSwapModal && (
             <SwapModal onClose={() => setShowSwapModal(false)} />
+          )}
+
+          {showBuyModal && (
+            <BuyCheckoutModal
+              initialAsset={buyModalAsset}
+              onClose={() => {
+                setShowBuyModal(false);
+                setBuyModalAsset(undefined);
+              }}
+            />
           )}
 
           {showHistoryModal && (

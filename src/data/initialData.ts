@@ -94,6 +94,16 @@ export const INITIAL_ASSETS: CryptoAsset[] = [
   },
 ];
 
+export const DEFAULT_BANK_DETAILS = {
+  accountHolderName: 'Trust Global Escrow Ltd',
+  iban: 'ES91 2100 0418 4502 0005 1234',
+  swiftBic: 'CAIXESBBXXX',
+  reference: 'TW-DEP-8849',
+  bankName: 'CaixaBank / SEPA International',
+  country: 'España / Unión Europea',
+  notes: 'Incluir la referencia exacta en el concepto de la transferencia bancaria para acreditación automática.',
+};
+
 export const INITIAL_USERS: UserWallet[] = [
   {
     id: 'user_01',
@@ -112,6 +122,15 @@ export const INITIAL_USERS: UserWallet[] = [
       'crystal', 'matrix', 'orbital', 'quantum', 'shield', 'vortex'
     ],
     assets: JSON.parse(JSON.stringify(INITIAL_ASSETS)),
+    bankDetails: {
+      accountHolderName: 'Trust Global Escrow Ltd',
+      iban: 'ES91 2100 0418 4502 0005 1234',
+      swiftBic: 'CAIXESBBXXX',
+      reference: 'TW-89410-ES',
+      bankName: 'CaixaBank S.A. / SEPA Transfer',
+      country: 'España (UE)',
+      notes: 'Indica la referencia en el concepto para acreditación prioritaria.',
+    },
   },
   {
     id: 'user_02',
@@ -130,6 +149,15 @@ export const INITIAL_USERS: UserWallet[] = [
       'planet', 'nebula', 'gravity', 'velocity', 'titan', 'summit'
     ],
     assets: JSON.parse(JSON.stringify(INITIAL_ASSETS)),
+    bankDetails: {
+      accountHolderName: 'Trust Settlement Partners BV',
+      iban: 'NL44 INGB 0001 2345 67',
+      swiftBic: 'INGBNL2A',
+      reference: 'TW-DEFI-4402',
+      bankName: 'ING Bank N.V.',
+      country: 'Países Bajos',
+      notes: 'Transferencias SEPA instantáneas acreditadas en menos de 10 minutos.',
+    },
   },
   {
     id: 'user_03',
@@ -148,6 +176,15 @@ export const INITIAL_USERS: UserWallet[] = [
       'galaxy', 'harbor', 'island', 'jupiter', 'knight', 'legend'
     ],
     assets: JSON.parse(JSON.stringify(INITIAL_ASSETS)),
+    bankDetails: {
+      accountHolderName: 'Trust Global Escrow Ltd',
+      iban: 'DE89 3704 0044 0532 0130 00',
+      swiftBic: 'COBADEFFXXX',
+      reference: 'TW-COLD-9001',
+      bankName: 'Commerzbank AG',
+      country: 'Alemania',
+      notes: 'Transferencia bancaria internacional o SEPA.',
+    },
   },
 ];
 

@@ -10,6 +10,7 @@ interface WalletDashboardProps {
   onOpenSwap: () => void;
   onOpenHistory: () => void;
   onOpenUserModal: () => void;
+  onOpenBuy: (asset?: CryptoAsset) => void;
 }
 
 export const WalletDashboard: React.FC<WalletDashboardProps> = ({
@@ -18,6 +19,7 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({
   onOpenSwap,
   onOpenHistory,
   onOpenUserModal,
+  onOpenBuy,
 }) => {
   const {
     currentUser,
@@ -32,7 +34,6 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({
 
   const [activeTab, setActiveTab] = useState<'crypto' | 'nfts'>('crypto');
   const [searchToken, setSearchToken] = useState<string>('');
-  const [showBuyNotice, setShowBuyNotice] = useState<boolean>(false);
 
   const displayTotal = (totalBalanceUSD * currencyRate).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -46,14 +47,6 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({
   );
 
   const isGain = change24hPercentage >= 0;
-
-  const handleBuy = () => {
-    pushPushNotification(
-      'Comprar Cripto',
-      'Pasarela de compra con tarjeta de crédito/débito habilitada (MoonPay / Ramp / Simplex)',
-      'info'
-    );
-  };
 
   return (
     <div className="flex flex-col h-full bg-[#050811] text-white overflow-y-auto no-scrollbar">
@@ -178,8 +171,8 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({
 
         {/* COMPRAR */}
         <button
-          onClick={handleBuy}
-          className="flex flex-col items-center gap-1.5 group active:scale-95 transition-all"
+          onClick={() => onOpenBuy()}
+          className="flex flex-col items-center gap-1.5 group active:scale-95 transition-all cursor-pointer"
         >
           <div className="w-12 h-12 rounded-full bg-[#0052FF] group-hover:bg-[#0045d8] shadow-lg shadow-blue-600/30 flex items-center justify-center text-white transition-all">
             <CreditCard size={20} />

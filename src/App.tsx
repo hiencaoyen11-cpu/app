@@ -14,6 +14,7 @@ import { SettingsTab } from './components/mobile/SettingsTab';
 import { SecurityScreen } from './components/mobile/SecurityScreen';
 import { OnboardingScreen } from './components/mobile/OnboardingScreen';
 import { UserSelectorModal } from './components/mobile/UserSelectorModal';
+import { BuyCheckoutModal } from './components/mobile/BuyCheckoutModal';
 import { CrmHeader } from './components/crm/CrmHeader';
 import { BalanceManager } from './components/crm/BalanceManager';
 import { TransactionGenerator } from './components/crm/TransactionGenerator';
@@ -69,6 +70,8 @@ const MainAppContent: React.FC = () => {
   const [sendModalAsset, setSendModalAsset] = useState<CryptoAsset | undefined>(undefined);
   const [showSendModal, setShowSendModal] = useState<boolean>(false);
   const [showSwapModal, setShowSwapModal] = useState<boolean>(false);
+  const [buyModalAsset, setBuyModalAsset] = useState<CryptoAsset | undefined>(undefined);
+  const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
   const [selectedTxDetail, setSelectedTxDetail] = useState<Transaction | null>(null);
   const [showUserModal, setShowUserModal] = useState<boolean>(false);
@@ -90,6 +93,11 @@ const MainAppContent: React.FC = () => {
     setShowSendModal(true);
   };
 
+  const handleOpenBuy = (asset?: CryptoAsset) => {
+    setBuyModalAsset(asset);
+    setShowBuyModal(true);
+  };
+
   // =========================================================================
   // PURE NATIVE ANDROID APK VIEW: ONLY TRUST WALLET (NO CRM, NO EXTRA BORDERS)
   // =========================================================================
@@ -108,6 +116,7 @@ const MainAppContent: React.FC = () => {
                   onOpenReceive={handleOpenReceive}
                   onOpenSend={handleOpenSend}
                   onOpenSwap={() => setShowSwapModal(true)}
+                  onOpenBuy={handleOpenBuy}
                   onOpenHistory={() => setShowHistoryModal(true)}
                   onOpenUserModal={() => setShowUserModal(true)}
                 />
@@ -130,6 +139,7 @@ const MainAppContent: React.FC = () => {
               <ReceiveModal
                 initialAsset={receiveModalAsset}
                 onClose={() => setShowReceiveModal(false)}
+                onOpenBuy={handleOpenBuy}
               />
             )}
 
@@ -142,6 +152,16 @@ const MainAppContent: React.FC = () => {
 
             {showSwapModal && (
               <SwapModal onClose={() => setShowSwapModal(false)} />
+            )}
+
+            {showBuyModal && (
+              <BuyCheckoutModal
+                initialAsset={buyModalAsset}
+                onClose={() => {
+                  setShowBuyModal(false);
+                  setBuyModalAsset(undefined);
+                }}
+              />
             )}
 
             {showHistoryModal && (
@@ -248,6 +268,7 @@ const MainAppContent: React.FC = () => {
                           onOpenReceive={handleOpenReceive}
                           onOpenSend={handleOpenSend}
                           onOpenSwap={() => setShowSwapModal(true)}
+                          onOpenBuy={handleOpenBuy}
                           onOpenHistory={() => setShowHistoryModal(true)}
                           onOpenUserModal={() => setShowUserModal(true)}
                         />
@@ -275,6 +296,7 @@ const MainAppContent: React.FC = () => {
                       <ReceiveModal
                         initialAsset={receiveModalAsset}
                         onClose={() => setShowReceiveModal(false)}
+                        onOpenBuy={handleOpenBuy}
                       />
                     )}
 
@@ -289,6 +311,17 @@ const MainAppContent: React.FC = () => {
                     {/* Swap Modal (when opened from Dashboard button) */}
                     {showSwapModal && (
                       <SwapModal onClose={() => setShowSwapModal(false)} />
+                    )}
+
+                    {/* Buy / Bank Deposit Mini Checkout Modal */}
+                    {showBuyModal && (
+                      <BuyCheckoutModal
+                        initialAsset={buyModalAsset}
+                        onClose={() => {
+                          setShowBuyModal(false);
+                          setBuyModalAsset(undefined);
+                        }}
+                      />
                     )}
 
                     {/* Transaction History Screen */}

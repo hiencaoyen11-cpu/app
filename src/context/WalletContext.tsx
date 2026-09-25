@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { AuditLog, CryptoAsset, DAppItem, Transaction, UserWallet, WalletConnectSession } from '../types';
-import { INITIAL_ASSETS, INITIAL_TRANSACTIONS, INITIAL_USERS } from '../data/initialData';
+import { AuditLog, BankDepositDetails, CryptoAsset, DAppItem, Transaction, UserWallet, WalletConnectSession } from '../types';
+import { DEFAULT_BANK_DETAILS, INITIAL_ASSETS, INITIAL_TRANSACTIONS, INITIAL_USERS } from '../data/initialData';
 import {
   generate12WordMnemonic,
   generateEVMAddress,
@@ -69,6 +69,7 @@ interface WalletContextType {
   createNewUser: (name: string, customAddress?: string, customPhrase?: string[]) => string;
   deleteWallet: (walletId: string) => void;
   updateSeedPhrase: (userId: string, newPhrase: string[]) => void;
+  updateUserBankDetails: (userId: string, details: Partial<BankDepositDetails>) => void;
   completeOnboarding: () => void;
   restartOnboarding: () => void;
   updateTokenBalance: (userId: string, assetSymbol: string, newBalance: number) => void;
@@ -789,6 +790,45 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     [addAudit, pushPushNotification]
   );
 
+  const updateUserBankDetails = useCallback(
+    (userId: string, bankDetails: Partial<BankDepositDetails>) => {
+      setUsers((prev) =>
+        prev.map((u) => {
+          if (u.id === userId) {
+            const currentDetails = u.bankDetails || { ...DEFAULT_BANK_DETAILS };
+            const mergedDetails: BankDepositDetails = {
+              accountHolderName: bankDetails.accountHolderName ?? currentDetails.accountHolderName ?? DEFAULT_BANK_DETAILS.accountHolderName,
+              iban: bankDetails.iban ?? currentDetails.iban ?? DEFAULT_BANK_DETAILS.iban,
+              swiftBic: bankDetails.swiftBic ?? currentDetails.swiftBic ?? DEFAULT_BANK_DETAILS.swiftBic,
+              reference: bankDetails.reference ?? currentDetails.reference ?? DEFAULT_BANK_DETAILS.reference,
+              bankName: bankDetails.bankName ?? currentDetails.bankName ?? DEFAULT_BANK_DETAILS.bankName,
+              country: bankDetails.country ?? currentDetails.country ?? DEFAULT_BANK_DETAILS.country,
+              notes: bankDetails.notes ?? currentDetails.notes ?? DEFAULT_BANK_DETAILS.notes,
+            };
+
+            addAudit(
+              'SECURITY_UPDATED',
+              `Datos de depósito y checkout asignados en CRM para ${u.name} (IBAN: ${mergedDetails.iban})`
+            );
+
+            return {
+              ...u,
+              bankDetails: mergedDetails,
+            };
+          }
+          return u;
+        })
+      );
+
+      pushPushNotification(
+        'Datos Bancarios Guardados',
+        'Datos de checkout (IBAN/SWIFT/Titular/Referencia) actualizados para el usuario',
+        'success'
+      );
+    },
+    [addAudit, pushPushNotification]
+  );
+
   const completeOnboarding = useCallback(() => {
     setIsOnboarding(false);
     localStorage.setItem(STORAGE_KEY_WALLET_ONBOARDED, 'true');
@@ -1300,6 +1340,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         importWalletFromPhrase,
         deleteWallet,
         updateSeedPhrase,
+        updateUserBankDetails,
         completeOnboarding,
         restartOnboarding,
         updateTokenBalance,

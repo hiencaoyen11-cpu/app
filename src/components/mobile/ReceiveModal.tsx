@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { ArrowLeft, Copy, Check, Share2, ExternalLink, SlidersHorizontal, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Share2, ExternalLink, SlidersHorizontal, AlertTriangle, CreditCard } from 'lucide-react';
 import { CryptoAsset, UserWallet } from '../../types';
 import { useWallet } from '../../context/WalletContext';
 
 interface ReceiveModalProps {
   onClose: () => void;
   initialAsset?: CryptoAsset;
+  onOpenBuy?: (asset?: CryptoAsset) => void;
 }
 
-export const ReceiveModal: React.FC<ReceiveModalProps> = ({ onClose, initialAsset }) => {
+export const ReceiveModal: React.FC<ReceiveModalProps> = ({ onClose, initialAsset, onOpenBuy }) => {
   const { currentUser, pushPushNotification } = useWallet();
   const [selectedAsset, setSelectedAsset] = useState<CryptoAsset>(
     initialAsset || currentUser.assets[0]
@@ -161,7 +162,7 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({ onClose, initialAsse
 
           <button
             onClick={handleShare}
-            className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 bg-[#121c2e] hover:bg-[#18263e] active:scale-95 border border-slate-700/60 rounded-2xl transition-all"
+            className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 bg-[#121c2e] hover:bg-[#18263e] active:scale-95 border border-slate-700/60 rounded-2xl transition-all cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center">
               <Share2 size={16} />
@@ -171,6 +172,22 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({ onClose, initialAsse
             </span>
           </button>
         </div>
+
+        {/* Buy with Bank Transfer Mini Checkout Shortcut */}
+        {onOpenBuy && (
+          <div className="w-full pt-1">
+            <button
+              onClick={() => {
+                onClose();
+                onOpenBuy(selectedAsset);
+              }}
+              className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-98 border border-blue-400/40 text-white font-bold text-xs rounded-2xl shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <CreditCard size={15} />
+              <span>Comprar {selectedAsset.symbol} (Mini Checkout Bancario)</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
